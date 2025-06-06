@@ -29,7 +29,8 @@ defmodule BookSearch.Library do
 
   def search(query) do
     %{embedding: embedding_tensor} = BookSearch.Model.predict(query)
-    embedding = Nx.to_flat_list(embedding_tensor) # Convert tensor to list
+    # Convert tensor to list
+    embedding = Nx.to_flat_list(embedding_tensor)
 
     from(b in Book,
       order_by: [asc: fragment("? <-> ?", b.embedding, ^embedding)],
@@ -80,14 +81,13 @@ defmodule BookSearch.Library do
 
   """
 
-  def create_book(attrs) do
-    %{embedding: embedding_tensor} = BookSearch.Model.predict(attrs["description"] || attrs["title"])
-    embedding = Nx.to_flat_list(embedding_tensor)
-    attrs = Map.put(attrs, "embedding", embedding)
+  def create_book(attrs \\ %{}) do
+    book =
+      %Book{}
+      |> Book.changeset(attrs)
+      |> Book.put_embedding()
 
-    %Book{}
-    |> Book.changeset(attrs)
-    |> Repo.insert()
+    Repo.insert(book)
   end
 
   @doc """

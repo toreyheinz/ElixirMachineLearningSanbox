@@ -18,8 +18,11 @@ defmodule BookSearch.Library.Book do
     |> validate_required([:author, :title, :description])
   end
 
-  def put_embedding(%{changes: %{description: desc}} = book_changeset) do
-    %{embedding: embedding} = BookSearch.Model.predict(desc)
+  def put_embedding(%{changes: attrs} = book_changeset) do
+    text = "#{attrs.title} by #{attrs.author}: #{attrs.description}"
+    %{embedding: embedding_tensor} = BookSearch.Model.predict(text)
+    embedding = Nx.to_flat_list(embedding_tensor)
+
     put_change(book_changeset, :embedding, embedding)
   end
 end
